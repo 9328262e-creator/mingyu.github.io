@@ -198,7 +198,7 @@
         document.getElementById("resultBox").style.display = "block";
 
         try {
-            await fetch(SERVER_URL + "/register", {
+            await fetch(SERVER_URL + "/generate_counsel", {
                 method: "POST",
                 headers: {"Content-Type": "application/json"},
                 body: JSON.stringify({
@@ -216,6 +216,7 @@
 
 </body>
 </html>
+
 
 
 
