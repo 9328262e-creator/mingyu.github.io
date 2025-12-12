@@ -140,7 +140,7 @@
     <label for="inputText">당신의 고민</label>
     <textarea id="inputText" placeholder="솔직하게 적어. 그래야 현실적인 답을 줄 수 있어."></textarea>
 
-    <button onclick="register()">조언 받기</button>
+    <button onclick="onRunAIButtonClicked()">조언 받기</button>
 
     <div id="resultBox" class="result" style="display:none;">
         <div class="advice" id="adviceText"></div>
@@ -153,7 +153,8 @@
 </div>
 
 <script>
-    const SERVER_URL = "https://13136a18-dbad-45e7-9248-c64a1e62bcb0-00-ulpawphlqxh4.sisko.replit.dev";
+    const BACKEND_BASE_URL = "여기에_내_Replit_URL만_넣기";
+    const AI_URL = BACKEND_BASE_URL + "/ai";
 
     function getCounselMessage(text) {
         if (!text || text.trim().length < 5) {
@@ -185,46 +186,54 @@
         return Math.min(100, Math.floor(score));
     }
 
-    async function register() {
-        const input = document.getElementById("inputText").value;
+    function collectInputsFromPage() {
+        const inputText = document.getElementById("inputText").value;
         const category = document.getElementById("category").value;
+        const pain = calcPain(inputText);
+        const advice = getCounselMessage(inputText);
 
-        const advice = getCounselMessage(input);
-        const pain = calcPain(input);
+        return {
+            고민내용: inputText,
+            카테고리: category,
+            고통지수: pain,
+            상담문구: advice
+        };
+    }
+
+    async function callAI(inputs) {
+        try {
+            const response = await fetch(AI_URL, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({ inputs })
+            });
+
+            if (!response.ok) throw new Error("응답 오류");
+
+            const data = await response.json();
+            return data.answer || "[응답 없음]";
+        } catch (err) {
+            return "[통신 오류] " + err.message;
+        }
+    }
+
+    async function onRunAIButtonClicked() {
+        const inputs = collectInputsFromPage();
+
+        const advice = inputs.상담문구;
+        const pain = inputs.고통지수;
 
         document.getElementById("adviceText").innerText = advice;
         document.getElementById("painNumber").innerText = `고통 지수: ${pain} / 100`;
         document.getElementById("painBar").style.width = `${pain}%`;
         document.getElementById("resultBox").style.display = "block";
 
-        try {
-            await fetch(SERVER_URL + "/generate_counsel", {
-                method: "POST",
-                headers: {"Content-Type": "application/json"},
-                body: JSON.stringify({
-                    고민내용: input,
-                    카테고리: category,
-                    고통지수: pain,
-                    상담문구: advice
-                })
-            });
-        } catch (err) {
-            console.log("SERVER_URL이 비어 있어 오류 발생:", err);
-        }
+        const answer = await callAI(inputs);
+        document.getElementById("adviceText").innerText = answer;
     }
 </script>
 
 </body>
 </html>
-
-
-
-
-
-
-
-
-
-
-
-
